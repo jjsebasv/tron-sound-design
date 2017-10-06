@@ -42,6 +42,8 @@ public class Tron extends Applet implements Runnable
     private boolean isIntroPlaying = false;
     private Clip clip = AudioSystem.getClip();
 
+    private int INVERSE_VEL = 100;
+
   boolean[][]	matrix;
   boolean	oneplayer=false;
   boolean	ingame=false;
@@ -129,71 +131,84 @@ public class Tron extends Applet implements Runnable
   {
     if (ingame)
     {
-        if(oneplayer) {
-            if (key == 'w' || key == 'W') // UP
-            {
-                p1pos[2] = 0;
-                p1pos[3] = -1;
-            } else if (key == 's' || key == 'S') // DOWN
-            {
-                p1pos[2] = 0;
-                p1pos[3] = 1;
-            } else if (key == 'a' || key == 'A') // LEFT
-            {
-                p1pos[2] = -1;
-                p1pos[3] = 0;
-            } else if (key == 'd' || key == 'D') // RIGHT
-            {
-                p1pos[2] = 1;
-                p1pos[3] = 0;
-            }
-            playSound("car", false);
-        } else
-      {
+        if (key == 'w' || key == 'W') // UP
+        {
+            p1pos[2] = 0;
+            p1pos[3] = -1;
+          playSound("car", false);
+        } else if (key == 's' || key == 'S') // DOWN
+        {
+            p1pos[2] = 0;
+            p1pos[3] = 1;
+          playSound("car", false);
+        } else if (key == 'a' || key == 'A') // LEFT
+        {
+            p1pos[2] = -1;
+            p1pos[3] = 0;
+          playSound("car", false);
+        } else if (key == 'd' || key == 'D') // RIGHT
+        {
+            p1pos[2] = 1;
+            p1pos[3] = 0;
+          playSound("car", false);
+        }
+
+      if(!oneplayer) {
          if (key == Event.UP) // UP
         {
           p2pos[2]=0;
           p2pos[3]=-1;
+          playSound("car", false);
         }
         else if (key == Event.DOWN) // DOWN
         {
           p2pos[2]=0;
           p2pos[3]=1;
+          playSound("car", false);
         }
         else if (key == Event.LEFT) // LEFT
         {
           p2pos[2]=-1;
           p2pos[3]=0;
+          playSound("car", false);
         }
         else if (key == Event.RIGHT) // RIGHT
         {
           p2pos[2]=1;
           p2pos[3]=0;
-        }
           playSound("car", false);
+        }
+
       }
-      if (key == Event.ESCAPE)
-          ingame=false;
+      if (key == Event.ESCAPE) {
+        player1score = 0;
+        player2score = 0;
+        playSoundOver("game-over");
+        System.out.println();
+        ingame=false;
+        playSound("game-intro", true);
+      }
+
     }
     else
     {
       if (key == '1')
       {
-          playSound("1player", false);
+          playSoundOver("1player-game");
           oneplayer=true;
         GameInit();
         ingame=true;
         player1score=0;
         player2score=0;
-          playSound("background", true);
+          playSound("game-back", true);
       } else if (key == '2') {
-          playSound("2players", false);
+          playSoundOver("2player-game");
         oneplayer=false;
         GameInit();
         ingame=true;
         player1score=0;
         player2score=0;
-          playSound("background", true);
+          playSound("game-back", true);
       } else {
           playSound("error", false);
       }
@@ -321,8 +336,11 @@ public class Tron extends Applet implements Runnable
       {
           if (ingame) {
               if (oneplayer) {
-                  playSound("player-lost", false);
+                  playSound("p1loses", false);
+              } else {
+                playSound("anyloses", false);
               }
+
             player2score++;
           }
 
@@ -331,13 +349,24 @@ public class Tron extends Applet implements Runnable
         // points for player 1
       if (matrix[p2pos[0]][p2pos[1]])
       {
-        if (ingame)
+        if (ingame) {
+          if (oneplayer) {
+            playSoundOver("p1wins");
+          } else {
+            playSound("anyloses", false);
+          }
           player1score++;
+        }
         GameInit();
       }
     }
-    if (player1score==5 || player2score==5)
+    if (player1score==5 || player2score==5) {
+      player1score = 0;
+      player2score = 0;
+      playSoundOver("game-over");
+      playSound("game-intro", true);
       ingame=false;
+    }
     matrix[p1pos[0]][p1pos[1]]=true;
     matrix[p2pos[0]][p2pos[1]]=true;
   }
@@ -429,7 +458,7 @@ public class Tron extends Applet implements Runnable
       try
       {
         paint(g);
-        starttime += 100;
+        starttime += INVERSE_VEL;
         Thread.sleep(Math.max(0, starttime-System.currentTimeMillis()));
       }
       catch (InterruptedException e)
@@ -457,10 +486,11 @@ public class Tron extends Applet implements Runnable
 
     private void playSound(String soundName, boolean isBackground) {
         soundName = soundName == null ? "sound" : soundName;
+      Clip toUseClip = null;
         try {
             AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource(SOUNDS_PATH + soundName + SOUND_EXT));
 
-            Clip toUseClip;
+
             if(isBackground) {
                 toUseClip = this.clip;
                 if (toUseClip.isOpen())
@@ -474,16 +504,38 @@ public class Tron extends Applet implements Runnable
             toUseClip.start();
         } catch (Exception err) {
             err.printStackTrace();
+            if (toUseClip != null)
+              toUseClip.close();
             JOptionPane.showMessageDialog(null, "SoundPlayer: "+err,null,0);
         }
+    }
+
+    private void playSoundOver(String soundName) {
+      soundName = soundName == null ? "sound" : soundName;
+      try {
+        InputStream in = getClass().getResourceAsStream(SOUNDS_PATH + soundName + SOUND_EXT);
+        AudioStream as = new AudioStream(in);
+        AudioPlayer.player.start(as);
+      } catch (Exception err) {
+        err.printStackTrace();
+        JOptionPane.showMessageDialog(null, "SoundPlayer: "+err,null,0);
+      }
     }
 
     private void playIntroMusic() {
 
         if(!isIntroPlaying) {
             isIntroPlaying = true;
-            playSound("intro", true);
+            playSound("game-intro", true);
         }
+    }
+
+    private void playMassiveBackground() {
+      isIntroPlaying = false;
+      if(!isIntroPlaying) {
+        isIntroPlaying = true;
+        playSound("massive-background", true);
+      }
     }
     
 }
