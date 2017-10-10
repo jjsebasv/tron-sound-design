@@ -41,6 +41,7 @@ public class Tron extends Applet implements Runnable
 
     private boolean isIntroPlaying = false;
     private Clip clip = AudioSystem.getClip();
+    private boolean heartbeat = false;
 
     private int INVERSE_VEL = 100;
 
@@ -62,8 +63,9 @@ public class Tron extends Applet implements Runnable
   boolean	showtitle=false;
   Color		p1color;
   Color		p2color;
+  private int musicLevel = 0;
 
-    public Tron() throws LineUnavailableException {
+  public Tron() throws LineUnavailableException {
     }
 
     public String getAppletInfo()
@@ -181,12 +183,7 @@ public class Tron extends Applet implements Runnable
 
       }
       if (key == Event.ESCAPE) {
-        player1score = 0;
-        player2score = 0;
-        playSoundOver("game-over");
-        System.out.println();
-        ingame=false;
-        playSound("game-intro", true);
+        gameOver();
       }
 
     }
@@ -223,7 +220,7 @@ public class Tron extends Applet implements Runnable
     return true;
   }
 
-  public void paint(Graphics g)
+  public void paint(Graphics g, Color c)
   {
     String s;
     Graphics gg;
@@ -236,7 +233,7 @@ public class Tron extends Applet implements Runnable
     if (goff==null || ii==null)
       return;
 
-    goff.setColor(new Color(16,24,64));
+    goff.setColor(c);
     goff.fillRect(0, 0, d.width, d.height);
 
     DrawScreen();
@@ -361,16 +358,20 @@ public class Tron extends Applet implements Runnable
       }
     }
     if (player1score==5 || player2score==5) {
-      player1score = 0;
-      player2score = 0;
-      playSoundOver("game-over");
-      playSound("game-intro", true);
-      ingame=false;
+      gameOver();;
     }
     matrix[p1pos[0]][p1pos[1]]=true;
     matrix[p2pos[0]][p2pos[1]]=true;
   }
-    
+
+  private void gameOver() {
+    player1score = 0;
+    player2score = 0;
+    playSoundOver("game-over");
+    playSound("game-intro", true);
+    this.heartbeat = false;
+    ingame=false;
+  }
 
   public void PlayGame()
   {
@@ -457,8 +458,21 @@ public class Tron extends Applet implements Runnable
       starttime=System.currentTimeMillis();
       try
       {
-        paint(g);
-        starttime += INVERSE_VEL;
+        if (oneplayer) {
+          int i = 2*player2score + 1;
+          paint(g, new Color(16 * i,24,64));
+          starttime += INVERSE_VEL - 10*player1score;
+          if (player2score == 4) {
+            playHeartbeat();
+          }
+          if (player1score == 4) {
+            changeBackgroundMusic(player2score);
+          }
+        } else {
+          paint(g, new Color(16,24,64));
+          starttime += INVERSE_VEL;
+        }
+
         Thread.sleep(Math.max(0, starttime-System.currentTimeMillis()));
       }
       catch (InterruptedException e)
@@ -490,13 +504,12 @@ public class Tron extends Applet implements Runnable
         try {
             AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource(SOUNDS_PATH + soundName + SOUND_EXT));
 
-
             if(isBackground) {
                 toUseClip = this.clip;
                 if (toUseClip.isOpen())
                     toUseClip.close();
                 toUseClip.open(audioIn);
-                toUseClip.loop(25);
+                toUseClip.loop(Clip.LOOP_CONTINUOUSLY);
             } else {
                 toUseClip = AudioSystem.getClip();
                 toUseClip.open(audioIn);
@@ -535,6 +548,35 @@ public class Tron extends Applet implements Runnable
       if(!isIntroPlaying) {
         isIntroPlaying = true;
         playSound("massive-background", true);
+      }
+    }
+
+    private void changeBackgroundMusic(int musicLevel) {
+      if (this.musicLevel != musicLevel) {
+        this.musicLevel = musicLevel;
+        playSound("massive-background", true);
+      }
+    }
+
+    private void playHeartbeat() {
+      if (!this.heartbeat) {
+        this.heartbeat = true;
+        try {
+          AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource(SOUNDS_PATH + "heartbeat2" + SOUND_EXT));
+
+          if (this.clip.isOpen())
+            this.clip.close();
+
+          this.clip.open(audioIn);
+          this.clip.loop(Clip.LOOP_CONTINUOUSLY);
+          this.clip.start();
+
+        } catch (Exception err) {
+          err.printStackTrace();
+          if (this.clip != null)
+            this.clip.close();
+          JOptionPane.showMessageDialog(null, "SoundPlayer: "+err,null,0);
+        }
       }
     }
     
