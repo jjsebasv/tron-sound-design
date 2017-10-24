@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_tron-in-java" default="compile.module.tron-in-java">
+  <dirname property="module.tron-in-java.basedir" file="${ant.file.module_tron-in-java}"/>
+  
+  <property name="module.jdk.home.tron-in-java" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.tron-in-java" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.tron-in-java" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.tron-in-java" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="tron-in-java.output.dir" value="${module.tron-in-java.basedir}/out/production/tron-in-java"/>
+  <property name="tron-in-java.testoutput.dir" value="${module.tron-in-java.basedir}/out/test/tron-in-java"/>
+  
+  <path id="tron-in-java.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="tron-in-java.module.production.classpath">
+    <path refid="${module.jdk.classpath.tron-in-java}"/>
+  </path>
+  
+  <path id="tron-in-java.runtime.production.module.classpath">
+    <pathelement location="${tron-in-java.output.dir}"/>
+  </path>
+  
+  <path id="tron-in-java.module.classpath">
+    <path refid="${module.jdk.classpath.tron-in-java}"/>
+    <pathelement location="${tron-in-java.output.dir}"/>
+  </path>
+  
+  <path id="tron-in-java.runtime.module.classpath">
+    <pathelement location="${tron-in-java.testoutput.dir}"/>
+    <pathelement location="${tron-in-java.output.dir}"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.tron-in-java">
+    <patternset refid="ignored.files"/>
+    <exclude name="out/**"/>
+    <exclude name="out/production/**"/>
+    <exclude name="out/production/tron-in-java/**"/>
+    <exclude name="out/production/tron-in-java/.idea/**"/>
+    <exclude name="out/production/tron-in-java/.idea/copyright/**"/>
+    <exclude name="out/production/tron-in-java/sounds/**"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.tron-in-java">
+    <patternset refid="excluded.from.module.tron-in-java"/>
+  </patternset>
+  
+  <path id="tron-in-java.module.sourcepath">
+    <dirset dir="${module.tron-in-java.basedir}/../../TPS">
+      <include name="tron-in-java"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.tron-in-java" depends="compile.module.tron-in-java.production,compile.module.tron-in-java.tests" description="Compile module tron-in-java"/>
+  
+  <target name="compile.module.tron-in-java.production" depends="register.custom.compilers" description="Compile module tron-in-java; production classes">
+    <mkdir dir="${tron-in-java.output.dir}"/>
+    <javac2 destdir="${tron-in-java.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.tron-in-java}/javac">
+      <compilerarg line="${compiler.args.tron-in-java}"/>
+      <bootclasspath refid="tron-in-java.module.bootclasspath"/>
+      <classpath refid="tron-in-java.module.production.classpath"/>
+      <src refid="tron-in-java.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.tron-in-java"/>
+    </javac2>
+    
+    <copy todir="${tron-in-java.output.dir}">
+      <fileset dir="${module.tron-in-java.basedir}">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.tron-in-java.tests" depends="register.custom.compilers,compile.module.tron-in-java.production" description="compile module tron-in-java; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.tron-in-java" description="cleanup module">
+    <delete dir="${tron-in-java.output.dir}"/>
+    <delete dir="${tron-in-java.testoutput.dir}"/>
+  </target>
+</project>

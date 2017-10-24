@@ -1,17 +1,5 @@
-//
-// TRON game
-//
-// (C)2000
-// Brian Postma
-// b.postma@hetnet.nl
-//
-
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-import sun.audio.AudioData;
 import sun.audio.AudioPlayer;
 import sun.audio.AudioStream;
-import sun.audio.ContinuousAudioDataStream;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -20,14 +8,11 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.swing.*;
 import java.awt.*;
 import java.applet.Applet;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
-import java.net.URL;
 
 public class Tron extends Applet implements Runnable
 {
-  Dimension	d;
+  Dimension	d = new Dimension(800,600);
   Font 		largefont = new Font("Helvetica", Font.BOLD, 24);
   Font		smallfont = new Font("Helvetica", Font.BOLD, 14);
 
@@ -75,6 +60,7 @@ public class Tron extends Applet implements Runnable
 
   public void init()
   {
+    setSize(800,600);
     Graphics g;
     int i;
     d = size();
@@ -564,11 +550,14 @@ public class Tron extends Applet implements Runnable
         try {
           AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource(SOUNDS_PATH + "heartbeat2" + SOUND_EXT));
 
-          if (this.clip.isOpen())
+          if (this.clip.isOpen()) {
             this.clip.close();
+          }
+
 
           this.clip.open(audioIn);
           this.clip.loop(Clip.LOOP_CONTINUOUSLY);
+
           this.clip.start();
 
         } catch (Exception err) {
